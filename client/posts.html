@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Titulo</th>
+          <th>Conteudo</th>
+          <th>Categoria</th>
+          <th>Tecnologias/Ferramentas</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <script>
+      const tbody = document.getElementById("tbody");
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const result = await fetch("http://localhost:3000/posts");
+
+          if (!result.ok) {
+            throw new Error("Erro na busca");
+          }
+
+          const posts = await result.json();
+
+          console.log(posts);
+
+          tbody.innerHTML = posts
+            .map(
+              (post) => `
+            <tr>
+                <td>${post.title}</td>
+                <td>${post.content}</td>
+                <td>${post.category}</td>
+                <td>${post.tags.join(", ")}</td>
+                <td>
+                    <button onclick="editPost(${post.id})">Editar</button>
+                    <button onclick="deletePost(${post.id})">Excluir</button>
+                </td>
+            </tr>
+        `,
+            )
+            .join("");
+        } catch (error) {
+          console.error(error.message);
+        }
+      });
+
+      function deletePost(id) {
+        fetch(`http://localhost:3000/posts/${id}`, {
+          method: "DELETE",
+        })
+          .then((result) => {
+            if (!result.ok) {
+              throw new Error("Erro ao deletar post");
+            }
+            location.reload();
+          })
+          .catch((error) => {
+            console.error(error.message);
+          });
+      }
+    </script>
+  </body>
+</html>

@@ -3,6 +3,14 @@
 node_modules/
 dist/
 .env
+.env.*
+!.env.example
 
-/client
-doc.md
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.DS_Store
+Thumbs.db
