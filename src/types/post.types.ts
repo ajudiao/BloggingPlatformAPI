@@ -19,4 +19,5 @@ export type SortOrder = "asc" | "desc";
 export interface FindAllPostsDTO {
   sortBy: PostSortBy;
   order: SortOrder;
+  term?: string;
 }

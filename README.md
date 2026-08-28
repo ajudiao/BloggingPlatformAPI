@@ -2,6 +2,10 @@
 
 API REST para criar, consultar, atualizar e remover posts de um blog. O projeto usa Express com TypeScript, PostgreSQL e Prisma ORM.
 
+## Referencia do desafio
+
+Este projeto foi desenvolvido com base no desafio [Blogging Platform API](https://roadmap.sh/projects/blogging-platform-api) do roadmap.sh.
+
 ## Tecnologias
 
 - Node.js
@@ -100,12 +104,14 @@ Por padrao, os posts sao ordenados por `createdAt` em ordem decrescente.
 ```bash
 curl "http://localhost:3000/posts"
 curl "http://localhost:3000/posts?sortBy=title&order=asc"
+curl "http://localhost:3000/posts?term=typescript"
 ```
 
 Valores aceitos:
 
 - `sortBy`: `createdAt`, `updatedAt` ou `title`
 - `order`: `asc` ou `desc`
+- `term`: pesquisa por título, conteúdo ou categoria
 
 ### Consultar um post
 

@@ -30,8 +30,17 @@ export async function updatePost(id: number, data: UpdatePostDTO) {
   }
 }
 
-export async function findAllPosts({ sortBy, order }: FindAllPostsDTO) {
+export async function findAllPosts({ sortBy, order, term }: FindAllPostsDTO) {
   return prisma.post.findMany({
+    where: term
+      ? {
+          OR: [
+            { title: { contains: term, mode: "insensitive" } },
+            { content: { contains: term, mode: "insensitive" } },
+            { category: { contains: term, mode: "insensitive" } },
+          ],
+        }
+      : undefined,
     orderBy: { [sortBy]: order },
   });
 }
