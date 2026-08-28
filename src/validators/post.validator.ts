@@ -7,6 +7,8 @@ export const createPostSchema = z.object({
   tags: z.array(z.string()),
 });
 
+export const updatePostSchema = createPostSchema;
+
 export const findAllPostsQuerySchema = z.object({
   sortBy: z.enum(["createdAt", "updatedAt", "title"]).default("createdAt"),
   order: z.enum(["asc", "desc"]).default("desc"),

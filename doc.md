@@ -6,12 +6,14 @@ Este documento explica como o projeto esta organizado e o que cada funcao implem
 
 A aplicacao e uma API REST para gerir posts de um blog.
 
-Neste momento existem duas operacoes funcionais:
+Neste momento existem cinco operacoes funcionais:
 
 - `POST /posts`: cria um post.
 - `GET /posts`: lista os posts, com ordenacao configuravel.
+- `GET /posts/:id`: procura um post pelo ID.
+- `PUT /posts/:id`: atualiza um post.
+- `DELETE /posts/:id`: apaga um post.
 
-As rotas para procurar por ID, atualizar e apagar ainda estao preparadas, mas os seus metodos ainda nao foram implementados.
 
 ## 2. Tecnologias principais
 
@@ -150,16 +152,6 @@ O controller nao e instanciado. Cada operacao e uma funcao independente exportad
 
 As funcoes sao passadas diretamente ao Express. Como nao dependem de `this`, nao precisam de `bind`.
 
-### Rotas preparadas mas ainda incompletas
-
-Estas rotas existem, mas os metodos correspondentes ainda contem apenas `// implementar`:
-
-```text
-GET    /posts/:id
-PUT    /posts/:id
-DELETE /posts/:id
-```
-
 ## 7. Validacao dos posts
 
 Ficheiro: `src/validators/post.validator.ts`
@@ -231,9 +223,22 @@ GET /posts?sortBy=title&order=asc
 GET /posts?sortBy=updatedAt&order=desc
 ```
 
-### `findPostById`, `updatePost` e `deletePost`
+### `findPostById(req, res)`
 
-Estao declarados no controller, mas ainda nao possuem implementacao.
+Converte o parametro `id` para numero, valida se e um inteiro positivo, chama `getPostById` no service e devolve `200` com o post encontrado.
+
+### `updatePost(req, res)`
+
+Processa `PUT /posts/:id`.
+
+1. Valida o `id` como inteiro positivo.
+2. Valida o corpo completo com `updatePostSchema`.
+3. Chama `updatePost` no service.
+4. Devolve `200` com o post atualizado.
+
+### `deletePost(req, res)`
+
+Valida o `id`, chama `deletePost` no service e devolve `200` com o post apagado.
 
 ## 9. Service
 
@@ -263,6 +268,10 @@ Recebe os parametros de ordenacao ja validados pelo controller e envia-os para o
 
 O service nao precisa de repetir a validacao do Zod porque o controller ja validou o formato. Se no futuro esta funcao for chamada por outro local que nao seja HTTP, pode ser necessario validar tambem nesse limite.
 
+### `updatePost(id, data)`
+
+Limpa o titulo, exige pelo menos 5 caracteres e envia os dados para o repository. Se o titulo ja existir, transforma o erro `P2002` numa resposta de erro `400`.
+
 ## 10. Repository
 
 Ficheiro: `src/repositories/post.repository.ts`
@@ -288,6 +297,10 @@ orderBy: { [sortBy]: order }
 ```
 
 Os valores possiveis ja foram limitados pelo validator, por isso o cliente so consegue escolher os campos permitidos.
+
+### `updatePost(id, data)`
+
+Executa `prisma.post.update({ where: { id }, data })`. Se o ID nao existir, transforma o erro `P2025` em `NotFoundError`, que resulta em `404`.
 
 ## 11. Cliente Prisma e PostgreSQL
 
@@ -343,7 +356,7 @@ E usado quando o titulo tem menos de 5 caracteres ou ja existe outro post com o 
 
 Representa um recurso inexistente e tem `statusCode = 404`.
 
-Ja esta criado para uso futuro nas operacoes por ID, mas ainda nao esta a ser usado.
+E usado quando o ID procurado ou atualizado nao corresponde a nenhum post.
 
 Ficheiro: `src/middlewares/error.middleware.ts`
 
@@ -411,7 +424,31 @@ prisma.post.findMany({ orderBy: { title: "asc" } })
 Controller devolve HTTP 200 com os posts
 ```
 
-## 16. Como executar
+## 16. Fluxo completo: atualizar um post
+
+```text
+PUT /posts/:id
+    |
+    v
+post.routes.ts chama updatePost do controller
+    |
+    v
+updatePostSchema valida req.body
+    |
+    v
+updatePost do service valida e limpa o titulo
+    |
+    v
+updatePost do repository atualiza o registo
+    |
+    v
+prisma.post.update
+    |
+    v
+Controller devolve HTTP 200 com o post atualizado
+```
+
+## 17. Como executar
 
 Instalar dependencias:
 
@@ -449,7 +486,7 @@ Iniciar a versao compilada:
 npm start
 ```
 
-## 17. Testes manuais atuais
+## 18. Testes manuais atuais
 
 Criar um post:
 
@@ -473,10 +510,19 @@ curl "http://localhost:3000/posts?sortBy=title&order=asc"
 
 Tentar criar um titulo duplicado deve devolver `400` com uma mensagem informando que o titulo ja existe.
 
-## 18. Proximos passos naturais
+Atualizar um post existente:
+
+```bash
+curl -X PUT http://localhost:3000/posts/1 \
+    -H "Content-Type: application/json" \
+    -d '{"title":"Aprender TypeScript","content":"Conteudo atualizado","category":"programacao","tags":["typescript","api"]}'
+```
+
+O corpo do `PUT` deve conter `title`, `content`, `category` e `tags`. Um ID inexistente devolve `404`; um ID invalido ou dados invalidos devolvem `400`.
+
+## 19. Proximos passos naturais
 
 1. Criar testes para `POST /posts` e `GET /posts`.
-2. Implementar `findById`.
-3. Implementar `update` e `delete`.
-4. Adicionar paginacao ao `findAll` quando a quantidade de posts crescer.
-5. Decidir se `Javascript` e `javascript` devem ser tratados como o mesmo titulo.
+2. Adicionar testes para `GET /posts/:id`, `PUT /posts/:id` e `DELETE /posts/:id`.
+3. Adicionar paginacao ao `findAll` quando a quantidade de posts crescer.
+4. Decidir se `Javascript` e `javascript` devem ser tratados como o mesmo titulo.

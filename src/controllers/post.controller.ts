@@ -2,12 +2,14 @@ import { Request, Response } from "express";
 import {
   createPostSchema,
   findAllPostsQuerySchema,
+  updatePostSchema,
 } from "../validators/post.validator";
 import {
   createPost as createPostService,
   findAllPosts as findAllPostsService,
   deletePost as deletePostService,
   getPostById as getPostPostByIdService,
+  updatePost as updatePostService,
 } from "../services/post.service";
 import { z } from "zod";
 import { BadRequestError } from "../utils/errors";
@@ -38,12 +40,29 @@ export async function findAllPosts(req: Request, res: Response) {
   }
 
   const posts = await findAllPostsService(result.data);
-
   return res.status(200).json(posts);
 }
 
 export async function updatePost(req: Request, res: Response) {
-  // implementar
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) throw BadRequestError("Id inválido");
+
+  const result = updatePostSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({
+      message: "Invalid post data",
+      errors: z.flattenError(result.error).fieldErrors,
+    });
+  }
+
+  const post = await updatePostService(id, result.data);
+
+  return res.status(200).json({
+    message: "Post updated successfully",
+    post,
+  });
 }
 
 export async function deletePost(req: Request, res: Response) {

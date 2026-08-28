@@ -1,9 +1,33 @@
 import prisma from "../lib/prisma";
-import { CreatePostDTO, FindAllPostsDTO } from "../types/post.types";
+import {
+  CreatePostDTO,
+  FindAllPostsDTO,
+  UpdatePostDTO,
+} from "../types/post.types";
 import { NotFoundError } from "../utils/errors";
 
 export async function createPost(data: CreatePostDTO) {
   return prisma.post.create({ data });
+}
+
+export async function updatePost(id: number, data: UpdatePostDTO) {
+  try {
+    return await prisma.post.update({
+      where: { id },
+      data,
+    });
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2025"
+    ) {
+      throw NotFoundError("Post não encontrado");
+    }
+
+    throw error;
+  }
 }
 
 export async function findAllPosts({ sortBy, order }: FindAllPostsDTO) {
@@ -28,15 +52,14 @@ export async function deletePost(id: number) {
     ) {
       throw NotFoundError("Post não encontrado");
     }
-
-      throw error;
+    throw error;
   }
 }
 
 export async function getPostById(id: number) {
-    return prisma.post.findUnique({
-        where: {
-            id,
-        },
-    });
+  return prisma.post.findUnique({
+    where: {
+      id,
+    },
+  });
 }
